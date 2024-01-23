@@ -1,0 +1,39 @@
+version: '3.9'
+
+
+x-base_service: &base_service
+  stop_signal: SIGKILL
+
+  ports:
+    - "18000:8000"
+    - "18001:8001"
+    - "18002:8002"
+    
+  volumes:
+    - &v1 ./models:/models
+    - &v2 ./export:/workspace
+    - &v3 ./triton:/workspace
+  tty: true
+
+
+
+
+name: wav2vec2
+
+
+services:
+  export: 
+    <<: *base_service
+    build: ./export
+    profiles: ['export']
+    volumes:
+      - *v1
+      - *v2
+  
+  triton-inference:
+    <<: *base_service
+    build: ./triton
+    profiles: ['triton']
+    volumes:
+      - *v1
+
