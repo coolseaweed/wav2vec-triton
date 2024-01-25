@@ -15,6 +15,7 @@ x-base_service: &base
     - &v_export ./export:/workspace
     - &v_triton ./triton:/workspace
     - &v_client ./client:/workspace
+    - &v_models_fp16 ./models_fp16:/models
 
 
 services:
@@ -38,7 +39,9 @@ services:
 
     profiles: ['server','all']
     volumes:
-      - *v_models
+      # - *v_models
+      - *v_models_fp16
+
     # command: 'tritonserver --model-repository /models --log-verbose 1' # debug
 
 
