@@ -4,3 +4,7 @@ onnx
 soundfile
 ipykernel
 scipy
+datasets
+jiwer
+librosa
+nvidia-ml-py3

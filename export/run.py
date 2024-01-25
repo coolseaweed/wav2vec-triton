@@ -31,14 +31,14 @@ def getArgs():
     parser.add_argument(
         "--vocab-path",
         type=str,
-        default="./vocab.json",
+        default="/data/vocab.json",
         help="huggingface vocab file path",
     )
 
     parser.add_argument(
         "--wav-path",
         type=str,
-        default="./test_audio.wav",
+        default="/data/test_audio.wav",
         help="test audio path",
     )
 

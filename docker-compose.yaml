@@ -1,49 +1,51 @@
 version: '3.9'
 
+name: wav2vec2-triton
 
-x-base_service: &base_service
+
+x-base_service: &base
   stop_signal: SIGKILL
-
-  ports:
-    - "8000:8000"
-    - "8001:8001"
-    - "8002:8002"
-
+  tty: true
   volumes:
-    - &v_base .:/workspace
     - &v_models ./models:/models
     - &v_data ./data:/data
 
     # debug
+    - &v_workspace .:/workspace
     - &v_export ./export:/workspace
     - &v_triton ./triton:/workspace
     - &v_client ./client:/workspace
-  tty: true
 
-name: wav2vec2
 
 services:
   export: 
-    <<: *base_service
+    <<: *base
     build: ./export
     profiles: ['export','all']
     volumes:
       - *v_models
       - *v_data
+      - *v_export
+
   
-  triton-server:
-    <<: *base_service
+  server:
+    <<: *base
     build: ./triton
-    profiles: ['triton','all']
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+
+    profiles: ['server','all']
     volumes:
       - *v_models
     # command: 'tritonserver --model-repository /models --log-verbose 1' # debug
 
 
-  triton-client:
-    <<: *base_service
+  client:
+    <<: *base
     build: ./client
     profiles: ['client','all']
     volumes:
       - *v_data
-    # command: 'tritonserver --model-repository /models --log-verbose 1' # debug
+      - *v_client

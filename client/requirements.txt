@@ -1,1 +1,5 @@
 tritonclient[grpc]
+scipy
+librosa
+datasets
+jiwer
