@@ -1,7 +1,6 @@
 transformers 
 onnxruntime 
 onnx 
-pythainlp 
 soundfile
 ipykernel
 scipy

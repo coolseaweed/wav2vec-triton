@@ -5,35 +5,45 @@ x-base_service: &base_service
   stop_signal: SIGKILL
 
   ports:
-    - "18000:8000"
-    - "18001:8001"
-    - "18002:8002"
-    
+    - "8000:8000"
+    - "8001:8001"
+    - "8002:8002"
+
   volumes:
-    - &v1 ./models:/models
-    - &v2 ./export:/workspace
-    - &v3 ./triton:/workspace
+    - &v_base .:/workspace
+    - &v_models ./models:/models
+    - &v_data ./data:/data
+
+    # debug
+    - &v_export ./export:/workspace
+    - &v_triton ./triton:/workspace
+    - &v_client ./client:/workspace
   tty: true
 
-
-
-
 name: wav2vec2
-
 
 services:
   export: 
     <<: *base_service
     build: ./export
-    profiles: ['export']
+    profiles: ['export','all']
     volumes:
-      - *v1
-      - *v2
+      - *v_models
+      - *v_data
   
-  triton-inference:
+  triton-server:
     <<: *base_service
     build: ./triton
-    profiles: ['triton']
+    profiles: ['triton','all']
     volumes:
-      - *v1
+      - *v_models
+    # command: 'tritonserver --model-repository /models --log-verbose 1' # debug
 
+
+  triton-client:
+    <<: *base_service
+    build: ./client
+    profiles: ['client','all']
+    volumes:
+      - *v_data
+    # command: 'tritonserver --model-repository /models --log-verbose 1' # debug
