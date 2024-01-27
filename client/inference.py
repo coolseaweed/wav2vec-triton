@@ -3,15 +3,9 @@ import argparse
 import sys
 import asyncio
 import numpy as np
-from scipy.io import wavfile
-import scipy.signal as sps
-from pathlib import Path
 
-VERBOSE = True
-INPUT_NAME = "input"
-OUTPUT_NAME = "output"
-NEW_RATE = 16000
-AUDIO_MAXLEN = 160000
+from pathlib import Path
+from asr_utils import *
 
 
 def get_args():
@@ -57,43 +51,14 @@ def get_args():
         help="audio max len",
     )
 
+    parser.add_argument(
+        "--fp16",
+        action="store_true",
+        default=False,
+        help="convert onnx model into fp16",
+    )
+
     return parser.parse_args()
-
-
-def layer_norm(x):  #
-    """You must call this before padding.
-    Code from https://github.com/vasudevgupta7/gsoc-wav2vec2/blob/main/src/wav2vec2/processor.py#L101
-    Fork TF to numpy
-    """
-    # -> (1, seqlen)
-    mean = np.mean(x, axis=-1, keepdims=True)
-    var = np.var(x, axis=-1, keepdims=True)
-    return np.squeeze((x - mean) / np.sqrt(var + 1e-5))
-
-
-def remove_adjacent(item):  # code from https://stackoverflow.com/a/3460423
-    nums = list(item)
-    a = nums[:1]
-    for item in nums[1:]:
-        if item != a[-1]:
-            a.append(item)
-    return "".join(a)
-
-
-def audio_prep(wav_path):
-    sampling_rate, data = wavfile.read(wav_path)
-    samples = round(len(data) * float(NEW_RATE) / sampling_rate)
-    new_data = sps.resample(data, samples)
-    speech = np.array(new_data, dtype=np.float32)
-    speech = layer_norm(speech)[None]
-    return speech
-
-
-def get_vocab(vocab_path):
-    with open(vocab_path, "r", encoding="utf-8") as f:
-        d = eval(f.read())
-
-    return dict((v, k) for k, v in d.items())
 
 
 async def main():
@@ -105,11 +70,15 @@ async def main():
     vocab_path = data_dir / Path(args.vocab_path)
     wav_path = data_dir / Path(args.input)
 
+    precision = "FP32" if not args.fp16 else "FP16"
+
+    print(f"precision is : {precision}")
+
     if not wav_path.exists():
         raise FileExistsError(f"'{args.input}' file not exist in data directory")
 
     vocab = get_vocab(vocab_path)
-    data = audio_prep(wav_path)
+    data = audio_prep(wav_path, args.fp16)
 
     try:
         triton_client = async_grpcclient.InferenceServerClient(url=args.url)
@@ -118,8 +87,7 @@ async def main():
         print(f"context creation failed: {e}")
         sys.exit()
 
-    # inputs.append(async_grpcclient.InferInput(INPUT_NAME, [1, len(data)], "FP32"))
-    inputs.append(async_grpcclient.InferInput(INPUT_NAME, [1, len(data[-1])], "FP32"))
+    inputs.append(async_grpcclient.InferInput(INPUT_NAME, [1, len(data[-1])], precision))
     inputs[-1].set_data_from_numpy(data.reshape((1, len(data[-1]))))
     outputs.append(async_grpcclient.InferRequestedOutput(OUTPUT_NAME))
 

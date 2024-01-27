@@ -1,3 +1,4 @@
 *.onnx
 *.wav
 data/zeroth_testset/
+__pycache__
