@@ -1,6 +1,7 @@
 transformers 
 onnxruntime 
 onnx 
+onnxconverter_common
 soundfile
 ipykernel
 scipy

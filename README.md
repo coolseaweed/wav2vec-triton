@@ -11,8 +11,10 @@ The purpose of repository is for exporting `wav2vec2` of huggingface into ONNX a
     ```
 
 - model export
+
+    FP32 version is default. Sepcify `--fp16` parameter to export FP16 version
     ```
-    docker exec wav2vec2-triton-export-1 python run.py
+    docker exec wav2vec2-triton-export-1 python run.py [--fp16]
     ```
 
 ## TritonInferenceServer
@@ -45,10 +47,10 @@ docker exec -it wav2vec2-triton-client-1 python benchmark.py # triton benchmark
 - dataset: `zeroth` clean testset
 - Total audio length: 4287 sec
 
-||huggingface|ONNX+Triton|
-|:---|:---:|:---:|
-|WER (%)|4.74|4.73|
-|CER (%)|1.78|1.78|
-|proc time (sec)|49.96|41.53|
-|RTF|0.0115|0.0097|
-|GPU (MiB)|3916|3286|
+||huggingface|ONNX(FP32)+Triton|ONNX(FP16)+Triton
+|:---|:---:|:---:|:---:|
+|WER (%)|4.74|4.73|4.70|
+|CER (%)|1.78|1.78|1.77|
+|proc time (sec)|49.96|41.53|35.98|
+|RTF|0.0115|0.0097|0.0084|
+|GPU (MiB)|3916|3286|1744|

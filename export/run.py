@@ -3,12 +3,10 @@ from transformers import Wav2Vec2ForCTC
 from torchaudio.models.wav2vec2.utils import import_huggingface_model
 import torch.onnx
 from pathlib import Path
-import sys
-from scipy.io import wavfile
-import scipy.signal as sps
-import numpy as np
 import onnx
-import onnxruntime
+from onnxconverter_common import float16
+import shutil
+import sys
 
 
 def getArgs():
@@ -16,8 +14,15 @@ def getArgs():
     parser.add_argument(
         "-o",
         "--output-dir",
-        default="/models/wav2vec2/1/",
+        default="/models/wav2vec2",
         help="onnx model export directory",
+    )
+
+    parser.add_argument(
+        "--version",
+        type=str,
+        default="1",
+        help="export version",
     )
 
     parser.add_argument(
@@ -29,76 +34,32 @@ def getArgs():
     )
 
     parser.add_argument(
-        "--vocab-path",
-        type=str,
-        default="/data/vocab.json",
-        help="huggingface vocab file path",
+        "--fp16",
+        action="store_true",
+        default=False,
+        help="convert onnx model into fp16",
     )
 
     parser.add_argument(
-        "--wav-path",
+        "--data-dir",
         type=str,
-        default="/data/test_audio.wav",
-        help="test audio path",
-    )
-
-    parser.add_argument(
-        "--max-len",
-        type=int,
-        default=160000,
-        help="audio max len",
+        default="/data",
+        help="data directory path",
     )
 
     return parser.parse_args()
 
 
-def remove_adjacent(item):
-    """code from https://stackoverflow.com/a/3460423"""
-    nums = list(item)
-    a = nums[:1]
-    for item in nums[1:]:
-        if item != a[-1]:
-            a.append(item)
-    return "".join(a)
-
-
-def layer_norm(x: np.array) -> np.array:
-    """layer normalization
-    Code from https://github.com/vasudevgupta7/gsoc-wav2vec2/blob/main/src/wav2vec2/processor.py#L101
-    Fork TF to numpy
-    """
-    mean = np.mean(x, axis=-1, keepdims=True)
-    var = np.var(x, axis=-1, keepdims=True)
-    return np.squeeze((x - mean) / (np.sqrt(var + 1e-5)))
-
-
-def asr(wav_path, ort_session, vocab):
-    sampling_rate, data = wavfile.read(wav_path)
-    samples = round(len(data) * float(16000) / sampling_rate)
-    new_data = sps.resample(data, samples)
-    speech = np.array(new_data, dtype=np.float32)
-    speech = layer_norm(speech)[None]
-    ort_inputs = {"input": speech}
-    ort_outs = ort_session.run(None, ort_inputs)
-    prediction = np.argmax(ort_outs, axis=-1)
-    _t1 = "".join([vocab[i] for i in list(prediction[0][0])])
-
-    return "".join([remove_adjacent(j) for j in _t1.split("[PAD]")])
-
-
-def main(args):
-    org = Wav2Vec2ForCTC.from_pretrained(args.repo)
-    hf_model = import_huggingface_model(org)
-    hf_model.eval()
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+def hf2onnx(hf_model, output_dir, fp16=False):
+    temp_dir = Path(".temp")
+    temp_dir.mkdir(exist_ok=True)
 
     # model export
-    dummy_input = torch.randn(1, args.max_len, requires_grad=True)
+    dummy_input = torch.randn(1, 160000, requires_grad=True)
     torch.onnx.export(
         hf_model,  # model being run
         dummy_input,  # model input (or a tuple for multiple inputs)
-        f"{output_dir}/model.onnx",  # where to save the model
+        f"{temp_dir}/model.onnx",  # where to save the model
         export_params=True,  # store the trained parameter weights inside the model file
         opset_version=14,  # the ONNX version to export the model to
         do_constant_folding=True,  # whether to execute constant folding for optimization
@@ -110,18 +71,39 @@ def main(args):
         },
     )
 
-    # inference test
-    with open(args.vocab_path, "r", encoding="utf-8") as f:
-        d = eval(f.read())
-        vocab = dict((v, k) for k, v in d.items())
+    if fp16:
+        model_fp32 = onnx.load_model(f"{temp_dir}/model.onnx")
+        model_fp16 = float16.convert_float_to_float16(model_fp32)
+        onnx.save(model_fp16, f"{output_dir}/model.onnx")
+    else:
+        shutil.move(f"{temp_dir}/model.onnx", f"{output_dir}/model.onnx")
 
-    ort_session = onnxruntime.InferenceSession(f"{output_dir}/model.onnx")  # load onnx model
+    shutil.rmtree(temp_dir)
 
-    decoding_text = asr(args.wav_path, ort_session, vocab)
-    decoding_text = decoding_text.replace("|", " ")
 
+def main(args):
+    org = Wav2Vec2ForCTC.from_pretrained(args.repo)
+    hf_model = import_huggingface_model(org)
+    hf_model.eval()
+
+    model_out_dir = Path(f"{args.output_dir}/{args.version}")
+    model_out_dir.mkdir(parents=True, exist_ok=True)
+
+    # export model
+    hf2onnx(hf_model, model_out_dir, args.fp16)
+
+    # copy config.pbtxt
+    config_file = "config_fp16.pbtxt" if args.fp16 else "config_fp32.pbtxt"
+    pbtxt_path = Path(f"{args.data_dir}/{config_file}")
+    if not pbtxt_path.exists():
+        raise FileNotFoundError(f"{pbtxt_path} not exist !")
+
+    shutil.copyfile(pbtxt_path, f"{args.output_dir}/config.pbtxt")
+
+    # final report
+    precision = "FP32" if not args.fp16 else "FP16"
     sys.stdout.write(
-        f"\nSuccess to export {args.repo} model !\noutput dir: {output_dir}\ntest decoding result: {decoding_text} \n"
+        f"\nSuccess to export {args.repo} model !\noutput dir: {args.output_dir}\nPrecision: {precision}\n"
     )
 
 
