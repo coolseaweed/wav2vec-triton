@@ -11,6 +11,7 @@ The purpose of repository is for exporting `wav2vec2` of huggingface into ONNX a
     ```
 
 - model export
+    It wil takes round 3 min.
 
     FP32 version is default. Sepcify `--fp16` parameter to export FP16 version
     ```
@@ -25,7 +26,7 @@ The purpose of repository is for exporting `wav2vec2` of huggingface into ONNX a
     ```
 - inference test
     ```
-    docker exec wav2vec2-triton-client-1 python inference.py -i test_audio.wav
+    docker exec wav2vec2-triton-client-1 python inference.py -i test_audio.wav [--fp16]
     ```
 
 
