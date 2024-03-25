@@ -29,6 +29,15 @@ The purpose of repository is for exporting `wav2vec2` of huggingface into ONNX a
     docker exec wav2vec2-triton-client-1 python inference.py -i test_audio.wav [--fp16]
     ```
 
+## Monitoring
+To monitor triton resource and metrics, I utilized **Prometheus & Grafana** to visualize statistics. 
+```bash
+docker compose --profile monitor -d --build
+```
+
+You can checkout via `3000` port and please setup [Triton Grafana Dashboard](https://grafana.com/grafana/dashboards/12832-triton-inference-server/). 
+
+![dashboard](./data/img/dashboard.png)
 
 ## Benchmarking
 For benchmarking, I used korean opean source dataset, [zeroth dataset](https://www.openslr.org/40/), to verify performance of ONNX+Triton combination. What I used spec of hardware is following.
@@ -63,3 +72,4 @@ For benchmarking, I used korean opean source dataset, [zeroth dataset](https://w
 |proc time (sec)|49.96|41.53|35.98|
 |RTF|0.0115|0.0097|0.0084|
 |GPU (MiB)|3916|3286|1744|
+
