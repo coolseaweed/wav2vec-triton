@@ -1,30 +1,30 @@
 # wav2vec2-triton
 
-The purpose of repository is for exporting `wav2vec2` of huggingface into ONNX and depolying via TritonInferenceServers. The reference model of `wav2vec2` is based on 
+The purpose of repository is to exporting `wav2vec2` of huggingface into **ONNX** and serving via **TritonInferenceServer**. The reference model of `wav2vec2` is 
 [kresnik/wav2vec2-large-xlsr-korean](https://huggingface.co/kresnik/wav2vec2-large-xlsr-korean) model which is trained korean syllables.
 
 ## ONNX model export
 
-- env setup
+- **Env. setup**
     ```
     docker compose --profile export up -d --build
     ```
 
-- model export
-    It wil takes round 3 min.
+- **Model Export**
 
-    FP32 version is default. Sepcify `--fp16` parameter to export FP16 version
+    FP32 version is default. Sepcify `--fp16` parameter to export FP16 version. Expected processing time is round 3 min.
     ```
     docker exec wav2vec2-triton-export-1 python run.py [--fp16]
     ```
 
 ## TritonInferenceServer
 
-- env setup
+- **Env setup**
+
     ```
     docker compose --profile server --profile client up -d --build
     ```
-- inference test
+- **Inference test**
     ```
     docker exec wav2vec2-triton-client-1 python inference.py -i test_audio.wav [--fp16]
     ```
@@ -41,7 +41,7 @@ You can enter Grafana Dashboard via `3000` port.
 ![dashboard](./data/img/dashboard.png)
 
 ## Benchmarking
-For benchmarking, I used korean opean source dataset, [zeroth dataset](https://www.openslr.org/40/), to verify performance of ONNX+Triton combination. What I used spec of hardware is following.
+For benchmarking, I used korean open source dataset, [zeroth dataset](https://www.openslr.org/40/), to verify performance of **ONNX+Triton** combination. What I used spec of hardware is like following.
 - GPU: GTX 1080
 - RAM: 16GB
 - Ubuntu: 22.04
@@ -49,15 +49,17 @@ For benchmarking, I used korean opean source dataset, [zeroth dataset](https://w
 - Nvidia driver version: 535.154.05
 
 ### How to benchmark
-- huggingface
+- **Huggingface**
 
-    Even the progress bar isn't update in real time, it is on processing. It will takes 3 min. Please be patient :)
+    Even the progress bar isn't update in real time, it is on processing. Please wait until process is finished :)
+
+    Expected processing time is 3 min.
     ```bash
     docker exec -it wav2vec2-triton-export-1 python benchmark.py # huggingface benchmark
     ```
-- Triton 
+- **Triton** 
 
-    Model warm-up can be affect to benchmark performance. Please run benchmark at least 2 times.
+    Model warm-up can be affect to benchmark performance. Please run benchmark at least twice times.
     ```bash
     docker exec -it wav2vec2-triton-client-1 python benchmark.py [--fp16] # triton benchmark
     ```
