@@ -27,7 +27,6 @@ services:
       - *v_data
       - *v_export
 
-  
   server:
     <<: *base
     build: ./triton
@@ -39,9 +38,7 @@ services:
     profiles: ['server','all']
     volumes:
       - *v_models
-
     # command: 'tritonserver --model-repository /models --log-verbose 1' # debug
-
 
   client:
     <<: *base
@@ -50,3 +47,31 @@ services:
     volumes:
       - *v_data
       - *v_client
+
+
+  # --------- MONITOR ---------- #
+  prometheus:
+    <<: *base
+    image: prom/prometheus:v2.45.0
+    profiles: ['monitor','all']
+    ports:
+      - 9090:9090
+    command:
+      - --web.enable-remote-write-receiver
+      - --enable-feature=native-histograms
+      - --config.file=/etc/prometheus/prometheus.yaml 
+    volumes:
+      - ./monitor/config/prometheus/triton.yaml:/etc/prometheus/prometheus.yaml:ro # config file
+
+  grafana:
+    <<: *base
+    profiles: ['monitor','all']
+    image: grafana/grafana:10.0.1
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+    volumes:
+      - ./monitor/config/grafana/prometheus-remote:/etc/grafana/provisioning/
