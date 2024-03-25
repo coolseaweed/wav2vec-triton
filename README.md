@@ -41,7 +41,7 @@ For benchmarking, I used korean opean source dataset, [zeroth dataset](https://w
 ### How to benchmark
 ```bash
 docker exec -it wav2vec2-triton-export-1 python benchmark.py # huggingface benchmark
-docker exec -it wav2vec2-triton-client-1 python benchmark.py # triton benchmark
+docker exec -it wav2vec2-triton-client-1 python benchmark.py [--fp16] # triton benchmark
 ```
 
 ### Result
