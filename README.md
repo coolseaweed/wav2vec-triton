@@ -30,12 +30,13 @@ The purpose of repository is for exporting `wav2vec2` of huggingface into ONNX a
     ```
 
 ## Monitoring
-To monitor triton resource and metrics, I utilized **Prometheus & Grafana** to visualize statistics. 
+I utilized **Prometheus & Grafana** to visualize statistics of **Triton**
 ```bash
-docker compose --profile monitor -d --build
+docker compose --profile monitor up -d --build
 ```
-
-You can checkout via `3000` port and please setup [Triton Grafana Dashboard](https://grafana.com/grafana/dashboards/12832-triton-inference-server/). 
+### Pre requirements
+Please setup [Triton Grafana Dashboard](https://grafana.com/grafana/dashboards/12832-triton-inference-server/). 
+You can enter Grafana Dashboard via `3000` port.
 
 ![dashboard](./data/img/dashboard.png)
 
