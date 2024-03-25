@@ -8,6 +8,7 @@ import sys
 import numpy as np
 from tqdm.asyncio import tqdm_asyncio
 from asr_utils import *
+from pathlib import Path
 
 
 def get_args():
@@ -66,8 +67,11 @@ def get_args():
 async def main():
     args = get_args()
     vocab_path = "/data/vocab.json"
-    test_ds = load_from_disk("/data/zeroth_testset")
-
+    data_dir = Path("/data/zeroth_testset")
+    if not data_dir.exists():
+        ds = load_dataset("kresnik/zeroth_korean", "clean")["test"]
+        ds.save_to_disk(data_dir)
+    test_ds = load_from_disk(data_dir)
     vocab = get_vocab(vocab_path)
 
     try:

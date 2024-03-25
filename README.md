@@ -12,7 +12,7 @@ The purpose of repository is to expor `wav2vec2` of huggingface into **ONNX** an
 
 - **Model Export**
 
-    FP32 version is default. Sepcify `--fp16` parameter to export FP16 version. Expected processing time is round 3 min.
+    FP32 version is default. Sepcify `--fp16` parameter to export FP16 version. Expected processing time is around 3 min.
     ```
     docker exec wav2vec2-triton-export-1 python run.py [--fp16]
     ```
@@ -49,11 +49,12 @@ For benchmarking, I used korean open source dataset, [zeroth dataset](https://ww
 - Nvidia driver version: 535.154.05
 
 ### How to benchmark
+**[!]** It will takes extra time for fetching datasets.
 - **Huggingface**
 
     Even the progress bar isn't update in real time, it is on processing. Please wait until process is finished :)
 
-    Expected processing time is 3 min.
+    Expected processing time is around 3 min.
     ```bash
     docker exec -it wav2vec2-triton-export-1 python benchmark.py # huggingface benchmark
     ```

@@ -8,6 +8,7 @@ import sys
 import asyncio
 from tqdm.asyncio import tqdm_asyncio
 import nvidia_smi
+from pathlib import Path
 
 
 nvidia_smi.nvmlInit()
@@ -44,10 +45,11 @@ async def main():
 
     model = Wav2Vec2ForCTC.from_pretrained("kresnik/wav2vec2-large-xlsr-korean").to("cuda")
 
-    # test_ds = load_dataset("kresnik/zeroth_korean", "clean")["test"]
-
-    # debug
-    test_ds = load_from_disk("/data/zeroth_testset")
+    data_dir = Path("/data/zeroth_testset")
+    if not data_dir.exists():
+        ds = load_dataset("kresnik/zeroth_korean", "clean")["test"]
+        ds.save_to_disk(data_dir)
+    test_ds = load_from_disk(data_dir)
 
     NUM_LOOPS = 3
 
