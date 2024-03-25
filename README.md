@@ -1,6 +1,6 @@
 # wav2vec2-triton
 
-The purpose of repository is to exporting `wav2vec2` of huggingface into **ONNX** and serving via **TritonInferenceServer**. The reference model of `wav2vec2` is 
+The purpose of repository is to expor `wav2vec2` of huggingface into **ONNX** and serve via **TritonInferenceServer**. The reference model of `wav2vec2` is 
 [kresnik/wav2vec2-large-xlsr-korean](https://huggingface.co/kresnik/wav2vec2-large-xlsr-korean) model which is trained korean syllables.
 
 ## ONNX model export
