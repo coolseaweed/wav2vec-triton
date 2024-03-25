@@ -40,11 +40,13 @@ For benchmarking, I used korean opean source dataset, [zeroth dataset](https://w
 
 ### How to benchmark
 - huggingface
+
     Even the progress bar isn't update in real time, it is on processing. It will takes 3 min. Please be patient :)
     ```bash
     docker exec -it wav2vec2-triton-export-1 python benchmark.py # huggingface benchmark
     ```
 - Triton 
+
     Model warm-up can be affect to benchmark performance. Please run benchmark at least 2 times.
     ```bash
     docker exec -it wav2vec2-triton-client-1 python benchmark.py [--fp16] # triton benchmark
